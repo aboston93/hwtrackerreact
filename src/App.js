@@ -1,8 +1,8 @@
 import React from 'react';
 
-const averageCard = (grades) => {
-  let average = 0
-  let sum = 0
+const averageCard = (grades, average = 0, sum = 0) => {
+  console.log(grades)
+  console.log(grades.assignments.length)
   for (let i = 0; i < grades.assignments.length; i++) {
     sum += grades.assignments[i].assignmentGrade
   }
@@ -13,16 +13,19 @@ const averageCard = (grades) => {
   )
 }
 
-
-const assignmentCard = (item) => {
+const assignmentCard = (item,i) => {
   return (
-    <div>
+    // We kept getting an error because react wanted a unique key
+    // it still runs but it's annoying.
+    // Brandon showed us this industry trick.
+    <div key={`assignment-card-index-${i}`}>    {/* empty tags are Fragments, which don't map to DOM nodes. They return multiple cells or list items. */}
       <li>{item.assignmentName}</li>
       <li>{item.assignmentGrade}</li>
     </div>
   )
 }
 
+// You can only have one map, otherwise you will have an infinite loop
 const courseCard = (crs) => {
   return (
     <div>
@@ -35,123 +38,104 @@ const courseCard = (crs) => {
   )
 }
 
-const coursesContainer = (courses) => courses.map(courseCard)
-
-class App extends React.Component {
+// ADDED FORM as CLASS
+// We had newGrade set to 0.  By changing it to a empty string, the placeholder 
+// of grade appears in the form's input box
+class CourseForm extends React.Component {
 
   state = {
-    courseName: "BY101",
-    assignments: [
-      {
-        assignmentName: "Quiz1",
-        assignmentGrade: 100
-      },
-      {
-        assignmentName: "Quiz2",
-        assignmentGrade: 100
-      },
-      {
-        assignmentName: "Quiz3",
-        assignmentGrade: 80
-      }
-    ]
+    newAssignment: "",
+    newGrade: ""
   }
 
-  addNewGrade = (newGradeValue) => {
-
-    //this.state.todoList.listItems.push(newItemText)
-    //create a copy of our todo list
-    let grades = { ...this.state.assignments } //[...this.state.todoList.listItems]
-
-    grades.assignmentName.push(newGradeValue)
-    this.setState({ grades })
+  // We used two seperate handleInput methods because one caused the other to update
+  // with it's information
+  handleInputChangeAssignment = (evnt) => {
+    this.setState({ newAssignment: evnt.target.value })
+  }
+  handleInputChangeGrade = (evnt) => {
+    this.setState({ newGrade: Number(evnt.target.value) })
   }
 
-  submissonHandler = (evnt) => {
-    evnt.preventDefault();
-    this.props.addNewGrade(this.state.addNewGrade)
+  // The data would not post.
+  // Brandon used a picking technique to pull out only what data was needed from state
+  // newAssignment and newGrade assigning it the values from state
+  handleFormSubmission = (evnt) => {
+    evnt.preventDefault()
+    const {newAssignment, newGrade} = this.state
+    // This statement runs the method to add the assignment, passing two arguments
+    this.props.addAssigment(newAssignment, newGrade)
   }
 
   render() {
-    console.log(this.grades)
     return (
-      <div>
-        <h1>Homework Tracker</h1>
-        {coursesContainer([this.state])}
-        <Reservation 
-          addNewGrade={this.assignments}
-          someText="asdf"
+      <form onSubmit={this.handleFormSubmission}>
+        <input
+          type="text"
+          placeholder="assignment name"
+          value={this.state.newAssignment}
+          onChange={this.handleInputChangeAssignment}
         />
-        {/* <form onSubmit={this.submissonHandler}>
-          <input
-            type="text" placeholder="grades"
-            value={this.state.grades}
-            onChange={this.inputChangeHandler} />
-          <input type="submit" value="add item" />
-        </form> */}
-      </div>
+
+        <input
+          type="number"
+          placeholder="grade"
+          value={this.state.newGrade}
+          onChange={this.handleInputChangeGrade}
+        />
+
+        <input
+          type="submit" value="add"
+        />
+      </form>
     )
   }
 }
 
-class Reservation extends React.Component {
-  state ={
-    
-  assignmentName: " ",
-    assignmentGrade: 90
+class App extends React.Component {
+
+  state = {
+    course:
+    {
+      courseName: "BY101",
+      assignments: [
+        {
+          assignmentName: "Quiz1",
+          assignmentGrade: 100
+        },
+        {
+          assignmentName: "Quiz2",
+          assignmentGrade: 100
+        },
+        {
+          assignmentName: "Quiz3",
+          assignmentGrade: 80
+        }
+      ]
+    }
   }
 
+  addNewAssignment = (newAssignment, newGrade) => {
+    //create a copy of our course
+    let course = { ...this.state.course }
 
-handleInputChange =  (event) => {
-  const target = event.target;
-  const value = target.value;
-  const name = target.name;
+    // assignments is an array of objects: assignmentName and assignmentGrade
+    course.assignments.push({assignmentName: newAssignment, assignmentGrade: newGrade})
 
-  this.setState({
-    [name]: value
-  });
+    this.setState({ course })
+  }
+
+  render() {
+    return (
+      <div>
+        <h1>Homework Tracker</h1>
+        <CourseForm
+          addAssigment={this.addNewAssignment}
+        />
+        {courseCard( this.state.course )}
+      </div >
+    )
+  }
 }
-
-render() {
-  return (
-    <form>onSubmit={this.handleFormSubmission}
-      <label>
-        assignment Name:
-        <input
-          name="assignmentName"
-          type="text"
-          value={this.state.assignmentName}
-          onChange={this.handleInputChange} />
-      </label>
-      <br />
-      <label>
-        assignment Grade
-        <input
-          name="assignmentGrade"
-          type="number"
-          value={this.state.assignmentGrade}
-          onChange={this.handleInputChange} />
-          
-      </label>
-      <input type="submit" value="add item" />
-    </form>
-  );
-}
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 export default App;
